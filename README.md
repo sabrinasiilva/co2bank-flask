@@ -109,23 +109,70 @@ Fontes: [Doconomy — Sustainable Consumption Index](https://www.doconomy.com/th
 
 ## Como rodar localmente
 
+### Pré-requisitos
+
+Antes de começar, certifique-se de ter instalado:
+
+- Python 3.10 ou superior ([baixar aqui](https://www.python.org/downloads/))
+- pip (já vem junto com o Python)
+- Git
+
+Para checar se o Python já está instalado:
+
+```bash
+python --version
+```
+
+### Instalação
+
 ```bash
 python -m venv venv
 venv\Scripts\activate          # Windows
+# source venv/bin/activate     # Linux/macOS
 pip install -r requirements.txt
-copy .env.example .env          # Windows (cp no Unix)
+copy .env.example .env          # Windows
+# cp .env.example .env          # Linux/macOS
+```
+
+Depois de copiar o `.env`, você pode editar o arquivo para trocar a `SECRET_KEY` ou o caminho do banco, se quiser.
+
+### Subir o servidor
+
+```bash
 python run.py
 ```
 
-Confirmar que subiu: `GET http://127.0.0.1:5000/health` deve responder
-`{"status": "ok"}`.
+Para confirmar que subiu certinho, acesse `http://127.0.0.1:5000/health` no navegador ou pelo terminal. A resposta deve ser `{"status": "ok"}`.
 
-Rodar os testes:
+### Rodar os testes
 
 ```bash
 pytest
 ```
 
+## Acessar o backend pelo celular (Android)
+
+Para testar o app no celular enquanto o backend roda no PC, você pode usar o `adb reverse`. Ele mapeia a porta do servidor para o celular via cabo USB, sem precisar de IP fixo ou colocar os dois na mesma rede Wi-Fi.
+
+Antes de começar:
+- Ative a Depuração USB no celular (Configurações > Opções do desenvolvedor > Depuração USB)
+- Conecte o celular por USB e autorize quando aparecer a pergunta no celular
+
+Com o backend rodando, execute no terminal do PC:
+
+```bash
+adb reverse tcp:5000 tcp:5000
+```
+
+Pronto. A partir daí, `http://localhost:5000` dentro do celular vai apontar direto para o servidor na sua máquina. Para confirmar:
+
+```bash
+adb shell curl http://localhost:5000/health
+# deve retornar: {"status": "ok"}
+```
+
+Se o celular não aparecer quando você rodar `adb devices`, tente desconectar e reconectar o cabo. Use um cabo que suporte dados, não apenas carga.
+
 ## App cliente
 
-O app (Flutter) que consome esta API vive no repositório `Co2Bank-dart`.
+O app mobile que consome esta API vive no repositório `Co2Bank-dart`.

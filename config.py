@@ -9,6 +9,8 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 class BaseConfig:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "dev-jwt-secret-key")
+    JWT_ACCESS_TOKEN_EXPIRES = 60 * 60 * 24 * 7  # 7 dias
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 

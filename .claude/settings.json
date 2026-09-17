@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/GABRIEL/Desktop/Co2Bank-dart/**)",
+      "Bash(flutter create *)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\GABRIEL\\Desktop\\Co2Bank-dart\\lib\\domain"
+    ]
+  }
+}

@@ -21,6 +21,7 @@ class UserModel(db.Model):
     birth_date = db.Column(db.String(10), nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     co2_limit_kg = db.Column(db.Float, nullable=False, default=200.0)
+    face_photo = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     transactions = db.relationship("TransactionModel", backref="user", lazy=True)

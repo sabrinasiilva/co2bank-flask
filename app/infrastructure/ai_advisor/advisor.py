@@ -1,46 +1,22 @@
-from collections import defaultdict
-from datetime import datetime, timezone
-from flask import Blueprint, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.infrastructure.persistence.models import TransactionModel, UserModel, db
-from app.infrastructure.ai_advisor.advisor import warn_if_needed
-from app.interface.api.transactions import _mcc_label
+import os
+import google.generativeai as genai
+from app.infrastructure.persistence.models import UserModel
 
-#essa paradinha aqui fml,Cria o agrupador de rotas com o prefixo /check-limit
-limits_bp = Blueprint("limits", __name__, url_prefix="/check-limit")
 
-@limits_bp.post("")
-@jwt_required()
-def check_limit():
-    # ja esse aqui pae pega o ID do usuario através do Token JWT enviado no header
-    user_id = get_jwt_identity()
-    user = UserModel.query.get(user_id)
-    
-    if not user:
-        return jsonify({"error": "Usuário não encontrado"}), 404
+def warn_if_needed(user: UserModel, percent_used: float, top_categories: list[dict]) -> dict:
+    if percent_used < 80:
+        return {"alert": False, "message": None}
 
-    now = datetime.now(timezone.utc)
-    
-    #aqui vai  filtra as transacoes apenas do mes e ano atuais
-    txs = TransactionModel.query.filter_by(user_id=user_id).filter(
-        db.extract("month", TransactionModel.occurred_at) == now.month,
-        db.extract("year",  TransactionModel.occurred_at) == now.year,
-    ).all()
+    top_str = ", ".join(
+        f"{c['category']} ({c['co2_kg']:.1f} kg)" for c in top_categories[:3]
+    )
+    prompt = (
+        f"O usuário usou {percent_used:.0f}% do limite mensal de CO2. "
+        f"As categorias que mais pesaram foram: {top_str}. "
+        f"Gere um aviso motivacional em 1-2 frases em português, mencionando as categorias reais."
+    )
 
-    # soma total de co2
-    total_co2 = sum(t.co2_kg for t in txs)
-    pct = (total_co2 / user.co2_limit_kg * 100) if user.co2_limit_kg > 0 else 0
-
-    # opa aqui agrupa os gastos somando o co2 por categoria
-    cat: dict[str, float] = defaultdict(float)
-    for t in txs:
-        cat[_mcc_label(t.merchant_category_code)] += t.co2_kg
-        
-    # transforma o dicionario em lista, ordena do maior pro menor gasto e pega os 3 primeiros
-    top = sorted(
-        [{"category": k, "co2_kg": round(v, 2)} for k, v in cat.items()],
-        key=lambda x: x["co2_kg"], reverse=True
-    )[:3]
-
-    # devolve o JSON final disparando a função do advisor
-    return jsonify(warn_if_needed(user, pct, top)), 200
+    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+    model = genai.GenerativeModel("gemini-2.0-flash")
+    response = model.generate_content(prompt)
+    return {"alert": True, "message": response.text}

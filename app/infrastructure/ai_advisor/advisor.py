@@ -1,5 +1,5 @@
 import os
-import google.generativeai as genai
+from google import genai
 from app.infrastructure.persistence.models import UserModel
 
 
@@ -16,7 +16,6 @@ def warn_if_needed(user: UserModel, percent_used: float, top_categories: list[di
         f"Gere um aviso motivacional em 1-2 frases em português, mencionando as categorias reais."
     )
 
-    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-    model = genai.GenerativeModel("gemini-2.0-flash")
-    response = model.generate_content(prompt)
+    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
     return {"alert": True, "message": response.text}

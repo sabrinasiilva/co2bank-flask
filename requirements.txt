@@ -6,4 +6,5 @@ python-dotenv
 pydantic
 pytest
 psycopg2-binary
-google-generativeai
+google-genai
+gunicorn
